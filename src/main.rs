@@ -1,7 +1,7 @@
-use crate::functions::append_log::append_log::append_log;
+// use crate::functions::append_log::append_log::append_log;
 use crate::functions::update_log::update_log;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 pub mod functions {
     pub mod append_log;
@@ -14,8 +14,18 @@ pub mod functions {
 fn main() {
     println!("Starting AutoSorter...");
 
-    let _base_path: &Path = Path::new("C:/Users/SebCy/Documents/AutoSorter");
-    let _logs_path: &Path = Path::new("C:/Users/SebCy/Documents/AutoSorter/Logs");
+    let is_at_work: bool = Path::new("C:/Users/sebastian.cyde").exists();
+
+    let _base_path: &Path;
+    let _logs_path: &Path;
+
+    if is_at_work {
+        _logs_path = Path::new("C:/Users/sebastian.cyde/Documents/AutoSorter/Logs");
+        _base_path = Path::new("C:/Users/sebastian.cyde/Documents/AutoSorter");
+    } else {
+        _logs_path = Path::new("C:/Users/SebCy/Documents/AutoSorter/Logs");
+        _base_path = Path::new("C:/Users/SebCy/Documents/AutoSorter");
+    }
 
     println!("Base path: {:?}", _base_path);
     println!("Logs path: {:?}", _logs_path);
@@ -38,6 +48,5 @@ fn main() {
     };
 
     let _ = update_log::update_log(_logs_path);
-
-    // let _ = append_log("Example text to append", _base_path);
+    let _ = update_log::append_log("Example text to append", _logs_path);
 }
