@@ -26,14 +26,18 @@ fn main() {
         println!("No AutoSorter directory found. Creating...");
         let _ = fs::create_dir_all(_base_path);
         println!("Created successfully");
+        println!(" ");
     };
 
     // Create directory for logs and initial log file
     if !Path::new(&_logs_path).exists() {
         println!("No logs directory found. Creating...");
         let _ = fs::create_dir_all(_logs_path);
-        update_log::update_log(_logs_path);
+        println!("Created successfully");
+        println!(" ");
     };
+
+    let _ = update_log::update_log(_logs_path);
 
     // let _ = append_log("Example text to append", _base_path);
 }

@@ -11,16 +11,24 @@ pub mod update_log {
         let file_name = format!("AutoSort_{}.txt", formatted_dt);
         let full_path = log_path.join(&file_name);
 
-        println!("Full log path: {:?}", full_path);
+        // Creates log based on seconds so should technically always be new
+        if !Path::new(&full_path).is_file() {
+            println!("Creating log...");
 
-        let f = File::create(&full_path)?;
-        let mut writer = BufWriter::new(f);
+            let f: File = File::create(&full_path)?;
+            let mut writer: BufWriter<File> = BufWriter::new(f);
 
-        writer.write_all(b"Hello, world!\n")?;
-        writer.write_all(b"Rust is awesome.\n")?;
-        writer.flush()?;
+            writer.write_all(b"Hello, world!\n")?;
+            writer.write_all(b"Rust is awesome.\n")?;
+            writer.flush()?;
 
-        println!("Log created successfully at: {:?}", full_path);
-        Ok(())
+            println!("Log created successfully at: {:?}", full_path);
+            println!(" ");
+
+            Ok(())
+        } else {
+            // Will never invoke
+            Ok(())
+        }
     }
 }
