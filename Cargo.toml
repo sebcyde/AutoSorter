@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 chrono = "0.4.26"
 tokio = { version = "1", features = ["full"] }
+notify = "5"
+crossbeam = "0.8"
