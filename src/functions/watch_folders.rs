@@ -5,7 +5,10 @@ pub mod watch_folders {
     use notify::{
         Config, EventKind, ReadDirectoryChangesWatcher, RecommendedWatcher, RecursiveMode, Watcher,
     };
-    use std::path::{Path, PathBuf};
+    use std::{
+        ffi::OsStr,
+        path::{Path, PathBuf},
+    };
 
     use crate::functions::update_log::update_log::append_log;
 
@@ -34,12 +37,16 @@ pub mod watch_folders {
                         EventKind::Other => "Other",
                     };
 
-                    // Convert event path to &str
+                    // Convert event path and event target to &str
                     let event_path: PathBuf = event.paths.get(0).unwrap().to_owned();
+                    let event_target: &OsStr = Path::file_name(&event_path).unwrap();
                     let event_path_str: &str = event_path.to_str().unwrap();
 
                     let _ = append_log(
-                        &format!("Event: {} at: {}", event_kind_str, event_path_str),
+                        &format!(
+                            "Event: {} {:?} at: {}",
+                            event_kind_str, event_target, event_path_str
+                        ),
                         logs_path,
                     );
                 }
