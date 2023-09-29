@@ -27,6 +27,8 @@ pub mod watch_folders {
                 Ok(event) => {
                     println!("Update Type: {:?}", event.kind);
 
+                    // TODO - From and to events need differentiating
+
                     // Convert EventKind type to &str
                     let event_kind_str: &str = match event.kind {
                         EventKind::Access(_) => "Access",
@@ -60,14 +62,14 @@ pub mod watch_folders {
     pub fn watch_downloads(root_path: &Path, logs_path: &Path) {
         let downloads_path: PathBuf = Path::new(root_path).join("Downloads");
         println!("Starting downloads watcher");
-        let _ = append_log("Starting downloads watcher.", logs_path);
+        let _ = append_log("Started downloads watcher.", logs_path);
         let _ = watch_folder(&downloads_path, logs_path);
     }
 
     pub fn watch_documents(root_path: &Path, logs_path: &Path) {
         let documents_path: PathBuf = Path::new(root_path).join("Documents");
         println!("Starting documents watcher");
-        let _ = append_log("Starting documents watcher.", logs_path);
+        let _ = append_log("Started documents watcher.", logs_path);
         let _ = watch_folder(&documents_path, logs_path);
     }
 }

@@ -13,11 +13,10 @@ pub mod update_log {
 
     pub fn create_log(log_path: &Path) -> io::Result<()> {
         let utc: DateTime<Utc> = Utc::now();
-        let formatted_dt: String = utc.format("%Y%m%d%H%M%S").to_string();
+        let formatted_dt: String = utc.format("%Y%m%d").to_string();
         let file_name: String = format!("AutoSort_{}.txt", formatted_dt);
         let full_path: PathBuf = log_path.join(&file_name);
 
-        // Creates log based on seconds so should technically always be new
         if !Path::new(&full_path).is_file() {
             println!("Creating log...");
 
@@ -39,7 +38,11 @@ pub mod update_log {
 
             Ok(())
         } else {
-            // Will never invoke
+            // Should add to log on program exit - not here
+            let _ = append_log("Ended Session\n", log_path);
+            //
+            let _ = append_log("Started new session", log_path);
+
             Ok(())
         }
     }
