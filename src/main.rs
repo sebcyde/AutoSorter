@@ -1,4 +1,3 @@
-// use crate::functions::append_log::append_log::append_log;
 use crate::functions::update_log::update_log;
 use crate::functions::watch_folders::watch_folders;
 use std::fs;
@@ -8,6 +7,7 @@ pub mod functions {
     pub mod archive;
     pub mod clean_archive;
     pub mod create_directory;
+    pub mod editor;
     pub mod update_log;
     pub mod watch_folders;
 }

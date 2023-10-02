@@ -10,7 +10,7 @@ pub mod watch_folders {
         path::{Path, PathBuf},
     };
 
-    use crate::functions::update_log::update_log::append_log;
+    use crate::functions::{editor::editor::fix_casing, update_log::update_log::append_log};
 
     pub fn watch_folder<P: AsRef<Path>>(path: P, logs_path: &Path) -> notify::Result<()> {
         let (tx, rx) = std::sync::mpsc::channel();
@@ -44,13 +44,21 @@ pub mod watch_folders {
                     let event_target: &OsStr = Path::file_name(&event_path).unwrap();
                     let event_path_str: &str = event_path.to_str().unwrap();
 
-                    let _ = append_log(
-                        &format!(
-                            "Event: {} {:?} at: {}",
-                            event_kind_str, event_target, event_path_str
-                        ),
-                        logs_path,
-                    );
+                    if event_path.is_dir() {
+                        println!("It's a directory.");
+                    } else if event_path.is_file() {
+                        println!("It's a file.");
+                        fix_casing(event_path, logs_path);
+                    } else {
+                        println!("It's neither a directory nor a file.");
+                        let _ = append_log(
+                            &format!(
+                                "Event: {} {:?} at: {}",
+                                event_kind_str, event_target, event_path_str
+                            ),
+                            logs_path,
+                        );
+                    }
                 }
                 Err(e) => println!("watch error: {:?}", e),
             }
