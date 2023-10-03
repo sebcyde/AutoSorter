@@ -1,3 +1,4 @@
+use crate::functions::create_directory::create_dir::create_containers;
 use crate::functions::update_log::update_log;
 use crate::functions::watch_folders::watch_folders;
 use std::fs;
@@ -54,7 +55,9 @@ fn main() {
     // Create a log for today
     let _ = update_log::create_log(logs_path);
 
+    create_containers(base_path);
+
     // Watch folders
     watch_folders::watch_downloads(root_path, &logs_path);
-    watch_folders::watch_documents(root_path, &logs_path);
+    // watch_folders::watch_documents(root_path, &logs_path);
 }
