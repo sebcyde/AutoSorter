@@ -1,6 +1,8 @@
 pub mod archive {
 
-    use std::fs;
+    use std::{fs, path::Path};
+
+    use crate::functions::update_log::update_log::append_log;
 
     pub fn archive(source_path: &str) -> Result<(), std::io::Error> {
         println!("Archiving!");
@@ -32,5 +34,13 @@ pub mod archive {
 
         println!("Archive complete");
         Ok(())
+    }
+
+    pub fn clean_archive(logs_path: &Path) {
+        _ = append_log("Archive Clean Started.", logs_path);
+
+        // Basically delete everything over a certain age
+
+        _ = append_log("Archive Clean Complete.", logs_path);
     }
 }

@@ -1,5 +1,8 @@
 pub mod editor {
-    use std::fs::rename;
+    use std::fs::{
+        copy, create_dir_all, metadata, read_dir, remove_file, rename, set_permissions, FileType,
+        ReadDir,
+    };
     use std::path::{Path, PathBuf};
 
     use crate::functions::update_log::update_log::append_log;
@@ -23,6 +26,26 @@ pub mod editor {
                         "File Rename Successful: {} at: {}",
                         source_filename,
                         destination_path.to_str().unwrap()
+                    ),
+                    logs_path,
+                );
+            }
+            Err(e) => {
+                println!("Error renaming file: {:?}", e);
+            }
+        }
+    }
+
+    pub fn delete_file(file_path: PathBuf, logs_path: &Path) {
+        let source_filename: &str = file_path.file_name().unwrap().to_str().unwrap();
+
+        match remove_file(file_path.clone()) {
+            Ok(()) => {
+                let _ = append_log(
+                    &format!(
+                        "File Deleted: {} at: {}",
+                        source_filename,
+                        file_path.to_str().unwrap()
                     ),
                     logs_path,
                 );
