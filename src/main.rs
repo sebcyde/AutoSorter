@@ -14,7 +14,9 @@ pub mod functions {
 }
 
 fn main() {
+    println!(" ");
     println!("Starting AutoSorter...");
+    println!(" ");
 
     let is_at_work: bool = Path::new("C:/Users/sebastian.cyde").exists();
     let base_path: &Path;
@@ -28,18 +30,23 @@ fn main() {
         root_path = Path::new("C:/Users/SebCy");
     }
 
-    let logs_ext: PathBuf = Path::new("logs").to_path_buf();
+    let logs_ext: PathBuf = Path::new("Logs").to_path_buf();
     let binding: PathBuf = Path::new(base_path).join(&logs_ext);
     let logs_path: &Path = binding.as_path();
 
+    let bugs_ext: PathBuf = Path::new("Bugs").to_path_buf();
+    let binding: PathBuf = Path::new(base_path).join(&bugs_ext);
+    let bugs_path: &Path = binding.as_path();
+
     println!("Base path: {:?}", base_path);
     println!("Logs path: {:?}", logs_path);
+    println!("Bug report path: {:?}", bugs_path);
     println!(" ");
 
     // Create main AutoSorter directory if it doesnt exist
     if !Path::new(base_path).exists() {
         println!("No AutoSorter directory found. Creating...");
-        let _ = fs::create_dir_all(base_path);
+        _ = fs::create_dir_all(base_path);
         println!("Created successfully");
         println!(" ");
     };
@@ -47,17 +54,24 @@ fn main() {
     // Create directory for logs if it doesnt exist
     if !Path::new(&logs_path).exists() {
         println!("No logs directory found. Creating...");
-        let _ = fs::create_dir_all(logs_path);
+        _ = fs::create_dir_all(logs_path);
         println!("Created successfully");
         println!(" ");
     };
 
-    // Create a log for today
-    let _ = update_log::create_log(logs_path);
+    // Create directory for bug logger if it doesnt exist
+    if !Path::new(&bugs_path).exists() {
+        println!("No bug logger directory found. Creating...");
+        _ = fs::create_dir_all(bugs_path);
+        println!("Created successfully");
+        println!(" ");
+    };
 
-    create_containers(base_path);
+    // Create a activity log and bug report for today
+    _ = update_log::create_log(logs_path);
+    _ = update_log::create_log(bugs_path);
 
     // Watch folders
-    watch_folders::watch_downloads(root_path, &logs_path);
+    watch_folders::watch_downloads(root_path, &logs_path, &bugs_path);
     // watch_folders::watch_documents(root_path, &logs_path);
 }

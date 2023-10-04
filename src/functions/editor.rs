@@ -1,12 +1,42 @@
 pub mod editor {
     use std::ffi::OsStr;
     use std::fs::{
-        read_dir, remove_file, rename, set_permissions, DirEntry, File, FileType, ReadDir,
+        create_dir_all, read_dir, remove_file, rename, set_permissions, DirEntry, File, FileType,
+        ReadDir,
     };
     use std::io;
     use std::path::{Path, PathBuf};
 
     use crate::functions::update_log::update_log::append_log;
+
+    fn final_move_step(
+        destination: &Path,
+        source: &Path,
+        file_name: &OsStr,
+        classification: &str,
+        logs_path: &Path,
+    ) {
+        let dir_binding: PathBuf = Path::new(destination).join(classification);
+        let dir_binding_path: &Path = dir_binding.as_path();
+
+        if !dir_binding_path.exists() {
+            println!("Creating {:?}", dir_binding_path);
+            _ = append_log(&format!("Creating {:?}", dir_binding_path), logs_path);
+            _ = create_dir_all(dir_binding_path);
+        } else {
+            println!("Existing Dir Path: {:?}", dir_binding_path);
+        }
+
+        let destination_path = dir_binding_path.join(file_name);
+        _ = rename(source, &destination_path);
+        _ = append_log(
+            &format!("Moved {:?} to {:?}.", file_name, destination_path),
+            logs_path,
+        );
+
+        println!("{} file moved successfully", classification);
+        println!(" ");
+    }
 
     pub fn clean_folder(dir_path: PathBuf, logs_path: &Path) {
         let entries: ReadDir = read_dir(&dir_path).unwrap();
@@ -34,101 +64,61 @@ pub mod editor {
             final_dir = Path::new("C:/Users/SebCy/Documents/AutoSorter/Files");
         }
 
-        // let source_path: &str = file_path.to_str().unwrap();
         let path: &Path = Path::new(&file_path);
 
         // Get file extension
         if let Some(extension) = path.extension() {
             if let Some(extension_str) = extension.to_str() {
-                println!("File extension: {}", extension_str);
-
-                let ext: PathBuf = Path::new(extension_str).to_path_buf();
                 let file_name: &OsStr = path.file_name().unwrap();
-                let binding: PathBuf = Path::new(final_dir).join(&ext).join(file_name);
-                let binding_path: &Path = binding.as_path();
-                println!("Moved to: {:?}", binding_path);
-
                 match extension_str {
-                    "txt" => {
-                        _ = rename(path, binding_path);
-                        _ = append_log(&format!("Moved {:?}", file_name), logs_path);
-                        println!("TXT File moved successfully");
+                    // Images
+                    "jpg" | "jpeg" | "avif" | "png" | "gif" | "bmp" | "webp" | "tiff" | "svg" => {
+                        final_move_step(final_dir, path, file_name, "Images", logs_path);
                     }
-                    "js" | "ts" => {
-                        _ = rename(path, binding_path);
-                        println!("JS/TS File moved successfully");
-                        _ = append_log(&format!("Moved {:?}", file_name), logs_path);
-
-                        // let js_ext: PathBuf = Path::new("JS").to_path_buf();
-                        // let binding: PathBuf = Path::new(final_dir).join(&js_ext);
-                        // let js_path: &Path = binding.as_path();
-                        // let file_name: &OsStr = path.file_name().unwrap();
-                        // _ = rename(path, js_path);
-
-                        // println!("JS/TS File moved successfully");
-                        // let _ = append_log(
-                        //     &format!("Moved {:?} to: {:?}", file_name, js_path),
-                        //     logs_path,
-                        // );
+                    // Documents
+                    "pdf" | "doc" | "docx" | "txt" | "rtf" => {
+                        final_move_step(final_dir, path, file_name, "Documents", logs_path);
                     }
-                    "jpg" | "jpeg" | "png" => {
-                        _ = rename(path, binding_path);
-                        println!("Image File moved successfully");
-                        _ = append_log(&format!("Moved {:?}", file_name), logs_path);
-
-                        // let img_ext: PathBuf = Path::new("IMAGES").to_path_buf();
-                        // let binding: PathBuf = Path::new(final_dir).join(&img_ext);
-                        // let img_path: &Path = binding.as_path();
-                        // let file_name: &OsStr = path.file_name().unwrap();
-                        // _ = rename(path, img_path);
-
-                        // println!("Image file moved successfully");
-                        // let _ = append_log(
-                        //     &format!("Moved {:?} to: {:?}", file_name, img_path),
-                        //     logs_path,
-                        // );
+                    // Spreadsheets
+                    "xls" | "xlsx" | "csv" => {
+                        final_move_step(final_dir, path, file_name, "Spreadsheets", logs_path);
                     }
-                    "mp4" => {
-                        let video_ext: PathBuf = Path::new("VIDEOS").to_path_buf();
-                        let binding: PathBuf = Path::new(final_dir).join(&video_ext);
-                        let video_path: &Path = binding.as_path();
-                        let file_name: &OsStr = path.file_name().unwrap();
-                        _ = rename(path, video_path);
-
-                        println!("Video file moved successfully");
-                        let _ = append_log(
-                            &format!("Moved {:?} to: {:?}", file_name, video_path),
-                            logs_path,
-                        );
+                    // Presentations
+                    "ppt" | "pptx" => {
+                        final_move_step(final_dir, path, file_name, "Presentations", logs_path);
                     }
-                    "pdf" => {
-                        let pdf_ext: PathBuf = Path::new("PDFs").to_path_buf();
-                        let binding: PathBuf = Path::new(final_dir).join(&pdf_ext);
-                        let pdf_path: &Path = binding.as_path();
-                        let file_name: &OsStr = path.file_name().unwrap();
-                        _ = rename(path, pdf_path);
-
-                        println!("pdf file moved successfully");
-                        let _ = append_log(
-                            &format!("Moved {:?} to: {:?}", file_name, pdf_path),
-                            logs_path,
-                        );
+                    // Audio
+                    "mp3" | "wav" | "aac" | "flac" | "ogg" => {
+                        final_move_step(final_dir, path, file_name, "Audio", logs_path);
                     }
-                    "exe" => {
-                        let exe_ext: PathBuf = Path::new("EXE").to_path_buf();
-                        let binding: PathBuf = Path::new(final_dir).join(&exe_ext);
-                        let exe_path: &Path = binding.as_path();
-                        let file_name: &OsStr = path.file_name().unwrap();
-                        _ = rename(path, exe_path);
-
-                        println!("exe file moved successfully");
-                        let _ = append_log(
-                            &format!("Moved {:?} to: {:?}", file_name, exe_path),
-                            logs_path,
-                        );
+                    // Video
+                    "mp4" | "avi" | "mkv" | "mov" | "wmv" | "flv" => {
+                        final_move_step(final_dir, path, file_name, "Videos", logs_path);
                     }
+                    // Compressed Folders - Might not need
+                    "zip" | "rar" | "7z" | "tar" | "gz" => {
+                        final_move_step(final_dir, path, file_name, "Compressed_Files", logs_path);
+                    }
+                    // Code
+                    "c" | "cpp" | "java" | "py" | "html" | "css" | "js" | "json" | "xml"
+                    | "sql" => {
+                        final_move_step(final_dir, path, file_name, "Code", logs_path);
+                    }
+                    // Executables
+                    "exe" | "app" => {
+                        final_move_step(final_dir, path, file_name, "Executables", logs_path);
+                    }
+                    // Fonts
+                    "ttf" | "otf" => {
+                        final_move_step(final_dir, path, file_name, "Fonts", logs_path);
+                    }
+                    // Databases
+                    "db" | "sqlite" => {
+                        final_move_step(final_dir, path, file_name, "Databases", logs_path);
+                    }
+                    // Other
                     _ => {
-                        println!("Unknown file type.");
+                        final_move_step(final_dir, path, file_name, "Unclassified", logs_path);
                     }
                 }
             } else {
@@ -142,31 +132,30 @@ pub mod editor {
     pub fn move_dir(file_path: PathBuf, logs_path: &Path) {}
 
     pub fn fix_casing(file_path: PathBuf, logs_path: &Path) {
-        let source_filename: &str = file_path.file_name().unwrap().to_str().unwrap();
+        if let Some(source_filename) = file_path.file_name().and_then(|os_str| os_str.to_str()) {
+            let transformed_filename = source_filename
+                .to_lowercase()
+                .replace(" ", "")
+                .replace("-", "_");
 
-        let transformed_filename: String = source_filename
-            .to_lowercase()
-            .replace(" ", "")
-            .replace("-", "_");
+            let destination_path = file_path.with_file_name(&transformed_filename);
 
-        let destination_path: PathBuf = file_path.with_file_name(transformed_filename);
-
-        match rename(file_path.clone(), destination_path.clone()) {
-            Ok(()) => {
-                println!("File successfully renamed.");
-
-                let _ = append_log(
-                    &format!(
-                        "File Rename Successful: {} at: {}",
-                        source_filename,
-                        destination_path.to_str().unwrap()
-                    ),
-                    logs_path,
-                );
-            }
-            Err(e) => {
+            if let Err(e) = rename(&file_path, &destination_path) {
                 println!("Error renaming file: {:?}", e);
+                return;
             }
+
+            if !transformed_filename.eq_ignore_ascii_case(source_filename) {
+                println!("File successfully renamed.");
+                let log_message = format!(
+                    "File Rename Successful: {} at: {}",
+                    source_filename,
+                    destination_path.to_str().unwrap_or("Invalid UTF-8 path")
+                );
+                let _ = append_log(&log_message, logs_path);
+            }
+        } else {
+            println!("Error: Invalid file name.");
         }
     }
 

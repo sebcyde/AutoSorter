@@ -78,8 +78,6 @@ pub mod update_log {
         writer.write_all(log_content)?;
         writer.flush()?;
 
-        println!(" ");
-
         Ok(())
     }
 }
