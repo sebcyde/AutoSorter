@@ -13,16 +13,11 @@ pub mod watch_folders {
 
     use crate::functions::{
         editor::editor::{fix_casing, move_file},
+        transfer::transfer::{transfer_dir, transfer_file},
         update_log::update_log::append_log,
     };
 
-    struct EventStruct {
-        event_path: PathBuf,
-        event_target: &'static OsStr,
-        event_path_str: &'static str,
-        event_kind_str: &'static str,
-        modify_kind: Option<&'static str>,
-    }
+    use crate::types::types::EventStruct;
 
     fn remove_event(event_object: EventStruct) {
         println!("Remove event triggered");
@@ -47,26 +42,12 @@ pub mod watch_folders {
     fn modify_event(event_object: EventStruct, logs_path: &Path, bugs_path: &Path) {
         println!("Modify event triggered");
         debug_sort_fn(&event_object);
-        sort(event_object, logs_path, bugs_path)
-    }
 
-    fn debug_sort_fn(event_object: &EventStruct) {
-        println!("Event Path: {:?}", event_object.event_path);
-        println!("Event Kind: {:?}", event_object.event_kind_str);
-        println!("Event Target: {:?}", event_object.event_target);
-    }
-
-    fn sort(event_object: EventStruct, logs_path: &Path, bugs_path: &Path) {
-        if Path::new(&event_object.event_path).is_dir() {
-            println!(
-                "{:?} is a directory. Transferring.",
-                event_object.event_target
-            );
+        if event_object.event_path.is_dir() {
+            println!("Transferring: {:?}.", event_object.event_target);
+            transfer_dir(event_object);
             // Move entire directory, fix casing and zip it
-        } else if Path::new(&event_object.event_path).is_file() {
-            println!("{:?} is a file. Transferring.", event_object.event_target);
-            fix_casing(event_object.event_path.clone(), logs_path);
-            move_file(event_object.event_path, logs_path)
+        } else if event_object.event_path.is_file() {
         } else {
             println!("{:?} - Not directory or file.", event_object.event_target);
 
@@ -79,6 +60,17 @@ pub mod watch_folders {
                 ),
                 bugs_path,
             );
+        }
+    }
+
+    fn debug_sort_fn(event_object: &EventStruct) {
+        println!("Event Path: {:?}", event_object.event_path);
+        println!("Event Kind: {:?}", event_object.event_kind_str);
+        println!("Event Target: {:?}", event_object.event_target);
+        if event_object.event_path.is_dir() {
+            println!("Event is Dir");
+        } else {
+            println!("Event is File");
         }
     }
 
@@ -154,6 +146,10 @@ pub mod watch_folders {
                                 event_kind_str: "Modify",
                                 modify_kind: Some("TODO"),
                             };
+
+                            println!("event_kind_str: {}", update_event.event_path_str);
+                            println!("event_target: {:?}", update_event.event_target);
+
                             modify_event(update_event, logs_path, bugs_path);
                         }
                         EventKind::Other => {

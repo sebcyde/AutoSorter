@@ -15,7 +15,7 @@ pub mod editor {
         file_name: &OsStr,
         classification: &str,
         logs_path: &Path,
-    ) {
+    ) -> PathBuf {
         let dir_binding: PathBuf = Path::new(destination).join(classification);
         let dir_binding_path: &Path = dir_binding.as_path();
 
@@ -36,9 +36,10 @@ pub mod editor {
 
         println!("{} file moved successfully", classification);
         println!(" ");
+        return destination_path;
     }
 
-    pub fn clean_folder(dir_path: PathBuf, logs_path: &Path) {
+    pub fn clean_folder(dir_path: PathBuf) {
         let entries: ReadDir = read_dir(&dir_path).unwrap();
 
         for entry in entries {
@@ -46,15 +47,20 @@ pub mod editor {
             let path: PathBuf = entry.path();
 
             if path.is_file() {
-                fix_casing(path.clone(), logs_path);
-                move_file(path, logs_path)
+                fix_casing(path.clone());
+                let destination: Option<PathBuf> = move_file(path);
+                if destination.is_some() {
+                    println!("File Move successful");
+                } else {
+                    println!("Error moving file");
+                }
             } else if path.is_dir() {
-                clean_folder(dir_path.to_owned(), logs_path);
+                clean_folder(dir_path.to_owned());
             }
         }
     }
 
-    pub fn move_file(file_path: PathBuf, logs_path: &Path) {
+    pub fn move_file(file_path: PathBuf) -> Option<PathBuf> {
         let is_at_work: bool = Path::new("C:/Users/sebastian.cyde").exists();
         let final_dir: &Path;
 
@@ -65,6 +71,7 @@ pub mod editor {
         }
 
         let path: &Path = Path::new(&file_path);
+        let destination: Option<PathBuf>;
 
         // Get file extension
         if let Some(extension) = path.extension() {
@@ -73,59 +80,90 @@ pub mod editor {
                 match extension_str {
                     // Images
                     "jpg" | "jpeg" | "avif" | "png" | "gif" | "bmp" | "webp" | "tiff" | "svg" => {
-                        final_move_step(final_dir, path, file_name, "Images", logs_path);
+                        let destination =
+                            final_move_step(final_dir, path, file_name, "Images", logs_path);
+                        return Some(destination);
                     }
                     // Documents
                     "pdf" | "doc" | "docx" | "txt" | "rtf" => {
-                        final_move_step(final_dir, path, file_name, "Documents", logs_path);
+                        let destination =
+                            final_move_step(final_dir, path, file_name, "Documents", logs_path);
+                        return Some(destination);
                     }
                     // Spreadsheets
                     "xls" | "xlsx" | "csv" => {
-                        final_move_step(final_dir, path, file_name, "Spreadsheets", logs_path);
+                        let destination =
+                            final_move_step(final_dir, path, file_name, "Spreadsheets", logs_path);
+                        return Some(destination);
                     }
                     // Presentations
                     "ppt" | "pptx" => {
-                        final_move_step(final_dir, path, file_name, "Presentations", logs_path);
+                        let destination =
+                            final_move_step(final_dir, path, file_name, "Presentations", logs_path);
+                        return Some(destination);
                     }
                     // Audio
                     "mp3" | "wav" | "aac" | "flac" | "ogg" => {
-                        final_move_step(final_dir, path, file_name, "Audio", logs_path);
+                        let destination =
+                            final_move_step(final_dir, path, file_name, "Audio", logs_path);
+                        return Some(destination);
                     }
                     // Video
                     "mp4" | "avi" | "mkv" | "mov" | "wmv" | "flv" => {
-                        final_move_step(final_dir, path, file_name, "Videos", logs_path);
+                        let destination =
+                            final_move_step(final_dir, path, file_name, "Videos", logs_path);
+                        return Some(destination);
                     }
                     // Compressed Folders - Might not need
                     "zip" | "rar" | "7z" | "tar" | "gz" => {
-                        final_move_step(final_dir, path, file_name, "Compressed_Files", logs_path);
+                        let destination = final_move_step(
+                            final_dir,
+                            path,
+                            file_name,
+                            "Compressed_Files",
+                            logs_path,
+                        );
+                        return Some(destination);
                     }
                     // Code
                     "c" | "cpp" | "java" | "py" | "html" | "css" | "js" | "json" | "xml"
                     | "sql" => {
-                        final_move_step(final_dir, path, file_name, "Code", logs_path);
+                        let destination =
+                            final_move_step(final_dir, path, file_name, "Code", logs_path);
+                        return Some(destination);
                     }
                     // Executables
                     "exe" | "app" => {
-                        final_move_step(final_dir, path, file_name, "Executables", logs_path);
+                        let destination =
+                            final_move_step(final_dir, path, file_name, "Executables", logs_path);
+                        return Some(destination);
                     }
                     // Fonts
                     "ttf" | "otf" => {
-                        final_move_step(final_dir, path, file_name, "Fonts", logs_path);
+                        let destination =
+                            final_move_step(final_dir, path, file_name, "Fonts", logs_path);
+                        return Some(destination);
                     }
                     // Databases
                     "db" | "sqlite" => {
-                        final_move_step(final_dir, path, file_name, "Databases", logs_path);
+                        let destination =
+                            final_move_step(final_dir, path, file_name, "Databases", logs_path);
+                        return Some(destination);
                     }
                     // Other
                     _ => {
-                        final_move_step(final_dir, path, file_name, "Unclassified", logs_path);
+                        let destination =
+                            final_move_step(final_dir, path, file_name, "Unclassified", logs_path);
+                        return Some(destination);
                     }
                 }
             } else {
                 println!("File extension is not a valid UTF-8 string.");
+                return None;
             }
         } else {
             println!("No file extension found.");
+            return None;
         }
     }
 

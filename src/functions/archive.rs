@@ -36,11 +36,11 @@ pub mod archive {
         Ok(())
     }
 
-    pub fn clean_archive(logs_path: &Path) {
-        _ = append_log("Archive Clean Started.", logs_path);
+    pub fn clean_archive() {
+        _ = append_log("Archive Clean Started.");
 
         // Basically delete everything over a certain age
 
-        _ = append_log("Archive Clean Complete.", logs_path);
+        _ = append_log("Archive Clean Complete.");
     }
 }

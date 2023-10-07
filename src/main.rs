@@ -1,4 +1,7 @@
+mod types;
+
 use crate::functions::create_directory::create_dir::create_containers;
+use crate::functions::get_dirs::get_dirs::{get_base, get_bugs, get_logs, get_root};
 use crate::functions::update_log::update_log;
 use crate::functions::watch_folders::watch_folders;
 use std::fs;
@@ -9,6 +12,8 @@ pub mod functions {
     pub mod clean_archive;
     pub mod create_directory;
     pub mod editor;
+    pub mod get_dirs;
+    pub mod transfer;
     pub mod update_log;
     pub mod watch_folders;
 }
@@ -18,30 +23,10 @@ fn main() {
     println!("Starting AutoSorter...");
     println!(" ");
 
-    let is_at_work: bool = Path::new("C:/Users/sebastian.cyde").exists();
-    let base_path: &Path;
-    let root_path: &Path;
-
-    if is_at_work {
-        base_path = Path::new("C:/Users/sebastian.cyde/Documents/AutoSorter");
-        root_path = Path::new("C:/Users/sebastian.cyde");
-    } else {
-        base_path = Path::new("C:/Users/SebCy/Documents/AutoSorter");
-        root_path = Path::new("C:/Users/SebCy");
-    }
-
-    let logs_ext: PathBuf = Path::new("Logs").to_path_buf();
-    let binding: PathBuf = Path::new(base_path).join(&logs_ext);
-    let logs_path: &Path = binding.as_path();
-
-    let bugs_ext: PathBuf = Path::new("Bugs").to_path_buf();
-    let binding: PathBuf = Path::new(base_path).join(&bugs_ext);
-    let bugs_path: &Path = binding.as_path();
-
-    println!("Base path: {:?}", base_path);
-    println!("Logs path: {:?}", logs_path);
-    println!("Bug report path: {:?}", bugs_path);
-    println!(" ");
+    let base_path: &Path = Path::new(get_base().as_str());
+    let root_path: &Path = Path::new(get_root().as_str());
+    let logs_path: &Path = Path::new(get_logs().as_str());
+    let bugs_path: &Path = Path::new(get_bugs().as_str());
 
     // Create main AutoSorter directory if it doesnt exist
     if !Path::new(base_path).exists() {
