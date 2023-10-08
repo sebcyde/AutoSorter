@@ -13,6 +13,7 @@ pub mod watch_folders {
 
     use crate::functions::{
         editor::editor::{fix_casing, move_file},
+        get_dirs::get_dirs::get_root,
         transfer::transfer::{transfer_dir, transfer_file},
         update_log::update_log::append_log,
     };
@@ -39,27 +40,22 @@ pub mod watch_folders {
         debug_sort_fn(&event_object);
     }
 
-    fn modify_event(event_object: EventStruct, logs_path: &Path, bugs_path: &Path) {
+    fn modify_event(event_object: EventStruct) {
         println!("Modify event triggered");
         debug_sort_fn(&event_object);
 
         if event_object.event_path.is_dir() {
             println!("Transferring: {:?}.", event_object.event_target);
             transfer_dir(event_object);
-            // Move entire directory, fix casing and zip it
         } else if event_object.event_path.is_file() {
+            transfer_file(event_object);
         } else {
             println!("{:?} - Not directory or file.", event_object.event_target);
 
-            let _ = append_log(
-                &format!(
-                    "BUG: {} {:?} at: {}",
-                    event_object.event_kind_str,
-                    event_object.event_target,
-                    event_object.event_path_str
-                ),
-                bugs_path,
-            );
+            _ = append_log(&format!(
+                "BUG: {} {:?} at: {}",
+                event_object.event_kind_str, event_object.event_target, event_object.event_path_str
+            ));
         }
     }
 
@@ -74,11 +70,7 @@ pub mod watch_folders {
         }
     }
 
-    fn watch_folder<P: AsRef<Path>>(
-        path: P,
-        logs_path: &Path,
-        bugs_path: &Path,
-    ) -> notify::Result<()> {
+    fn watch_folder<P: AsRef<Path>>(path: P) -> notify::Result<()> {
         let (tx, rx) = std::sync::mpsc::channel();
 
         // Create new watcher
@@ -147,10 +139,7 @@ pub mod watch_folders {
                                 modify_kind: Some("TODO"),
                             };
 
-                            println!("event_kind_str: {}", update_event.event_path_str);
-                            println!("event_target: {:?}", update_event.event_target);
-
-                            modify_event(update_event, logs_path, bugs_path);
+                            modify_event(update_event);
                         }
                         EventKind::Other => {
                             let event_path_clone: &'static PathBuf =
@@ -176,17 +165,10 @@ pub mod watch_folders {
         Ok(())
     }
 
-    pub fn watch_downloads(root_path: &Path, logs_path: &Path, bugs_path: &Path) {
-        let downloads_path: PathBuf = Path::new(root_path).join("Downloads");
-        println!("Starting downloads watcher");
-        let _ = append_log("Started downloads watcher.", logs_path);
-        let _ = watch_folder(&downloads_path, logs_path, bugs_path);
-    }
-
-    pub fn watch_documents(root_path: &Path, logs_path: &Path, bugs_path: &Path) {
-        let documents_path: PathBuf = Path::new(root_path).join("Documents");
-        println!("Starting documents watcher");
-        let _ = append_log("Started documents watcher.", logs_path);
-        let _ = watch_folder(&documents_path, logs_path, bugs_path);
+    pub fn start_watch(dir_name: &'static str) {
+        let dir_path: PathBuf = Path::new(get_root().as_str()).join(dir_name);
+        println!("Starting {} watcher", dir_name);
+        _ = append_log(&format!("Starting {} watcher.", dir_name));
+        _ = watch_folder(&dir_path);
     }
 }

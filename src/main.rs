@@ -1,11 +1,10 @@
 mod types;
 
-use crate::functions::create_directory::create_dir::create_containers;
 use crate::functions::get_dirs::get_dirs::{get_base, get_bugs, get_logs, get_root};
-use crate::functions::update_log::update_log;
-use crate::functions::watch_folders::watch_folders;
+use crate::functions::update_log::update_log::{create_bug_report, create_log};
+use crate::functions::watch_folders::watch_folders::start_watch;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 pub mod functions {
     pub mod archive;
@@ -46,17 +45,17 @@ fn main() {
 
     // Create directory for bug logger if it doesnt exist
     if !Path::new(&bugs_path).exists() {
-        println!("No bug logger directory found. Creating...");
+        println!("No bug report directory found. Creating...");
         _ = fs::create_dir_all(bugs_path);
         println!("Created successfully");
         println!(" ");
     };
 
-    // Create a activity log and bug report for today
-    _ = update_log::create_log(logs_path);
-    _ = update_log::create_log(bugs_path);
+    // Create an activity log and bug report for today
+    _ = create_bug_report();
+    _ = create_log();
 
-    // Watch folders
-    watch_folders::watch_downloads(root_path, &logs_path, &bugs_path);
-    // watch_folders::watch_documents(root_path, &logs_path);
+    // Watch folders - parameter is path from root eg. "Documents" for {root}/Documents
+    start_watch("Downloads");
+    // start_watch("Documents");
 }

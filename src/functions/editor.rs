@@ -14,7 +14,6 @@ pub mod editor {
         source: &Path,
         file_name: &OsStr,
         classification: &str,
-        logs_path: &Path,
     ) -> PathBuf {
         let dir_binding: PathBuf = Path::new(destination).join(classification);
         let dir_binding_path: &Path = dir_binding.as_path();
@@ -47,7 +46,7 @@ pub mod editor {
             let path: PathBuf = entry.path();
 
             if path.is_file() {
-                fix_casing(path.clone());
+                fix_casing(&path);
                 let destination: Option<PathBuf> = move_file(path);
                 if destination.is_some() {
                     println!("File Move successful");
@@ -169,14 +168,14 @@ pub mod editor {
 
     pub fn move_dir(file_path: PathBuf, logs_path: &Path) {}
 
-    pub fn fix_casing(file_path: PathBuf, logs_path: &Path) {
+    pub fn fix_casing(file_path: PathBuf) {
         if let Some(source_filename) = file_path.file_name().and_then(|os_str| os_str.to_str()) {
-            let transformed_filename = source_filename
+            let transformed_filename: String = source_filename
                 .to_lowercase()
                 .replace(" ", "")
                 .replace("-", "_");
 
-            let destination_path = file_path.with_file_name(&transformed_filename);
+            let destination_path: PathBuf = file_path.with_file_name(&transformed_filename);
 
             if let Err(e) = rename(&file_path, &destination_path) {
                 println!("Error renaming file: {:?}", e);
@@ -184,13 +183,15 @@ pub mod editor {
             }
 
             if !transformed_filename.eq_ignore_ascii_case(source_filename) {
-                println!("File successfully renamed.");
-                let log_message = format!(
-                    "File Rename Successful: {} at: {}",
-                    source_filename,
-                    destination_path.to_str().unwrap_or("Invalid UTF-8 path")
+                println!("File rename successful.");
+                _ = append_log(
+                    format!(
+                        "File Rename Successful: {} at: {}",
+                        source_filename,
+                        destination_path.to_str().unwrap()
+                    )
+                    .as_str(),
                 );
-                let _ = append_log(&log_message, logs_path);
             }
         } else {
             println!("Error: Invalid file name.");
