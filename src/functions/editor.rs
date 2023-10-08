@@ -7,213 +7,132 @@ pub mod editor {
     use std::io;
     use std::path::{Path, PathBuf};
 
-    use crate::functions::update_log::update_log::append_log;
+    use crate::functions::get_dirs::get_dirs::get_base;
+    use crate::functions::update_log::update_log::{append_bug_report, append_log};
 
-    fn final_move_step(
-        destination: &Path,
-        source: &Path,
-        file_name: &OsStr,
-        classification: &str,
-    ) -> PathBuf {
-        let dir_binding: PathBuf = Path::new(destination).join(classification);
-        let dir_binding_path: &Path = dir_binding.as_path();
+    pub fn str_transform(input: &str) -> String {
+        return input.to_lowercase().replace(" ", "").replace("-", "_");
+    }
+
+    fn move_dir(file_path: PathBuf) {}
+
+    fn move_file(source: &Path, file_name: &OsStr, classification: &str) -> PathBuf {
+        let base_path: String = format!("{}/Files/{}", get_base(), classification);
+        let dir_binding_path: &Path = Path::new(base_path.as_str());
 
         if !dir_binding_path.exists() {
-            println!("Creating {:?}", dir_binding_path);
-            _ = append_log(&format!("Creating {:?}", dir_binding_path), logs_path);
+            _ = append_log(&format!("Creating {:?}", dir_binding_path));
             _ = create_dir_all(dir_binding_path);
         } else {
-            println!("Existing Dir Path: {:?}", dir_binding_path);
+            _ = append_log(&format!("Existing Dir Path: {:?}", dir_binding_path));
         }
 
-        let destination_path = dir_binding_path.join(file_name);
+        let destination_path: PathBuf = dir_binding_path.join(file_name);
         _ = rename(source, &destination_path);
-        _ = append_log(
-            &format!("Moved {:?} to {:?}.", file_name, destination_path),
-            logs_path,
-        );
+        _ = append_log(&format!("Moved {:?} to {:?}.", file_name, destination_path));
 
-        println!("{} file moved successfully", classification);
-        println!(" ");
         return destination_path;
     }
 
     pub fn clean_folder(dir_path: PathBuf) {
-        let entries: ReadDir = read_dir(&dir_path).unwrap();
-
-        for entry in entries {
-            let entry: DirEntry = entry.unwrap();
-            let path: PathBuf = entry.path();
+        for entry in read_dir(&dir_path).unwrap() {
+            let path: PathBuf = entry.unwrap().path();
 
             if path.is_file() {
-                fix_casing(&path);
-                let destination: Option<PathBuf> = move_file(path);
-                if destination.is_some() {
-                    println!("File Move successful");
-                } else {
-                    println!("Error moving file");
-                }
+                let new_destination: String = fix_casing(path).unwrap();
+                classify_file(Path::new(&new_destination).to_path_buf());
             } else if path.is_dir() {
-                clean_folder(dir_path.to_owned());
+                // Recursive folder clean?
+                println!("Recursive clean folder call?");
+                println!("{:?}", path.to_str());
+                // clean_folder(dir_path.to_owned());
             }
         }
     }
 
-    pub fn move_file(file_path: PathBuf) -> Option<PathBuf> {
-        let is_at_work: bool = Path::new("C:/Users/sebastian.cyde").exists();
-        let final_dir: &Path;
-
-        if is_at_work {
-            final_dir = Path::new("C:/Users/sebastian.cyde/Documents/AutoSorter/Files");
-        } else {
-            final_dir = Path::new("C:/Users/SebCy/Documents/AutoSorter/Files");
-        }
-
+    pub fn classify_file(file_path: PathBuf) -> Option<PathBuf> {
         let path: &Path = Path::new(&file_path);
+        let ext: &str = path.extension().unwrap().to_str().unwrap();
+        let file_name: &OsStr = path.file_name().unwrap();
         let destination: Option<PathBuf>;
 
+        // debug
+        println!("{}", format!("File: {:?} - Ext: {}", file_name, ext));
+
         // Get file extension
-        if let Some(extension) = path.extension() {
-            if let Some(extension_str) = extension.to_str() {
-                let file_name: &OsStr = path.file_name().unwrap();
-                match extension_str {
-                    // Images
-                    "jpg" | "jpeg" | "avif" | "png" | "gif" | "bmp" | "webp" | "tiff" | "svg" => {
-                        let destination =
-                            final_move_step(final_dir, path, file_name, "Images", logs_path);
-                        return Some(destination);
-                    }
-                    // Documents
-                    "pdf" | "doc" | "docx" | "txt" | "rtf" => {
-                        let destination =
-                            final_move_step(final_dir, path, file_name, "Documents", logs_path);
-                        return Some(destination);
-                    }
-                    // Spreadsheets
-                    "xls" | "xlsx" | "csv" => {
-                        let destination =
-                            final_move_step(final_dir, path, file_name, "Spreadsheets", logs_path);
-                        return Some(destination);
-                    }
-                    // Presentations
-                    "ppt" | "pptx" => {
-                        let destination =
-                            final_move_step(final_dir, path, file_name, "Presentations", logs_path);
-                        return Some(destination);
-                    }
-                    // Audio
-                    "mp3" | "wav" | "aac" | "flac" | "ogg" => {
-                        let destination =
-                            final_move_step(final_dir, path, file_name, "Audio", logs_path);
-                        return Some(destination);
-                    }
-                    // Video
-                    "mp4" | "avi" | "mkv" | "mov" | "wmv" | "flv" => {
-                        let destination =
-                            final_move_step(final_dir, path, file_name, "Videos", logs_path);
-                        return Some(destination);
-                    }
-                    // Compressed Folders - Might not need
-                    "zip" | "rar" | "7z" | "tar" | "gz" => {
-                        let destination = final_move_step(
-                            final_dir,
-                            path,
-                            file_name,
-                            "Compressed_Files",
-                            logs_path,
-                        );
-                        return Some(destination);
-                    }
-                    // Code
-                    "c" | "cpp" | "java" | "py" | "html" | "css" | "js" | "json" | "xml"
-                    | "sql" => {
-                        let destination =
-                            final_move_step(final_dir, path, file_name, "Code", logs_path);
-                        return Some(destination);
-                    }
-                    // Executables
-                    "exe" | "app" => {
-                        let destination =
-                            final_move_step(final_dir, path, file_name, "Executables", logs_path);
-                        return Some(destination);
-                    }
-                    // Fonts
-                    "ttf" | "otf" => {
-                        let destination =
-                            final_move_step(final_dir, path, file_name, "Fonts", logs_path);
-                        return Some(destination);
-                    }
-                    // Databases
-                    "db" | "sqlite" => {
-                        let destination =
-                            final_move_step(final_dir, path, file_name, "Databases", logs_path);
-                        return Some(destination);
-                    }
-                    // Other
-                    _ => {
-                        let destination =
-                            final_move_step(final_dir, path, file_name, "Unclassified", logs_path);
-                        return Some(destination);
-                    }
-                }
-            } else {
-                println!("File extension is not a valid UTF-8 string.");
-                return None;
+        match ext {
+            // Images
+            "jpg" | "jpeg" | "avif" | "png" | "gif" | "bmp" | "webp" | "tiff" | "svg" => {
+                Some(move_file(path, file_name, "Images"))
             }
-        } else {
-            println!("No file extension found.");
-            return None;
+            // Documents
+            "pdf" | "doc" | "docx" | "txt" | "rtf" => Some(move_file(path, file_name, "Documents")),
+            // Spreadsheets
+            "xls" | "xlsx" | "csv" => Some(move_file(path, file_name, "Spreadsheets")),
+            // Presentations
+            "ppt" | "pptx" => Some(move_file(path, file_name, "Presentations")),
+            // Audio
+            "mp3" | "wav" | "aac" | "flac" | "ogg" => Some(move_file(path, file_name, "Audio")),
+            // Video
+            "mp4" | "avi" | "mkv" | "mov" | "wmv" | "flv" => {
+                Some(move_file(path, file_name, "Videos"))
+            }
+            // Compressed Folders - Might not need
+            "zip" | "rar" | "7z" | "tar" | "gz" => {
+                Some(move_file(path, file_name, "Compressed_Files"))
+            }
+            // Code
+            "c" | "cpp" | "java" | "py" | "html" | "css" | "js" | "json" | "xml" | "sql" => {
+                Some(move_file(path, file_name, "Code"))
+            }
+            // Executables
+            "exe" | "app" => Some(move_file(path, file_name, "Executables")),
+            // Fonts
+            "ttf" | "otf" => Some(move_file(path, file_name, "Fonts")),
+            // Databases
+            "db" | "sqlite" => Some(move_file(path, file_name, "Databases")),
+            // Other
+            _ => Some(move_file(path, file_name, "Other")),
         }
     }
 
-    pub fn move_dir(file_path: PathBuf, logs_path: &Path) {}
-
-    pub fn fix_casing(file_path: PathBuf) {
-        if let Some(source_filename) = file_path.file_name().and_then(|os_str| os_str.to_str()) {
-            let transformed_filename: String = source_filename
-                .to_lowercase()
-                .replace(" ", "")
-                .replace("-", "_");
-
-            let destination_path: PathBuf = file_path.with_file_name(&transformed_filename);
-
-            if let Err(e) = rename(&file_path, &destination_path) {
-                println!("Error renaming file: {:?}", e);
-                return;
-            }
-
-            if !transformed_filename.eq_ignore_ascii_case(source_filename) {
-                println!("File rename successful.");
-                _ = append_log(
-                    format!(
-                        "File Rename Successful: {} at: {}",
-                        source_filename,
-                        destination_path.to_str().unwrap()
-                    )
-                    .as_str(),
-                );
-            }
-        } else {
-            println!("Error: Invalid file name.");
-        }
-    }
-
-    pub fn delete_file(file_path: PathBuf, logs_path: &Path) {
+    pub fn fix_casing(file_path: PathBuf) -> Option<String> {
         let source_filename: &str = file_path.file_name().unwrap().to_str().unwrap();
+        let transformed_filename: String = str_transform(source_filename);
+        let destination: PathBuf = file_path.with_file_name(&transformed_filename);
 
-        match remove_file(file_path.clone()) {
+        println!("From Case Fixer:");
+        println!("source_filename: {}", source_filename);
+        println!("destination file: {:?}", destination);
+        println!(" ");
+
+        if rename(&file_path, &destination).is_ok() {
+            _ = append_log(
+                format!("File Rename Successful: {}", destination.to_str().unwrap()).as_str(),
+            );
+            return Some(transformed_filename);
+        }
+
+        return None;
+    }
+
+    pub fn delete_file(file_path: PathBuf) {
+        let source_filename: &str = file_path.file_name().unwrap().to_str().unwrap();
+        let res: Result<(), io::Error> = remove_file(&file_path);
+
+        match res {
             Ok(()) => {
-                let _ = append_log(
-                    &format!(
-                        "File Deleted: {} at: {}",
-                        source_filename,
-                        file_path.to_str().unwrap()
-                    ),
-                    logs_path,
-                );
+                _ = append_log(&format!(
+                    "File Deleted: {} at: {}",
+                    source_filename,
+                    file_path.to_str().unwrap()
+                ));
             }
             Err(e) => {
-                println!("Error renaming file: {:?}", e);
+                _ = append_bug_report(&format!(
+                    "File Deletion Error at: {}",
+                    file_path.to_str().unwrap()
+                ));
             }
         }
     }

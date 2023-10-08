@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "AutoSorter"
+name = "NEXUS"
 version = "0.1.0"
 dependencies = [
  "chrono",

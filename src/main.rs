@@ -1,7 +1,7 @@
 mod types;
 
 use crate::functions::get_dirs::get_dirs::{get_base, get_bugs, get_logs, get_root};
-use crate::functions::update_log::update_log::{create_bug_report, create_log};
+use crate::functions::update_log::update_log::{append_log, create_bug_report, create_log};
 use crate::functions::watch_folders::watch_folders::start_watch;
 use std::fs;
 use std::path::Path;
@@ -12,6 +12,7 @@ pub mod functions {
     pub mod create_directory;
     pub mod editor;
     pub mod get_dirs;
+    pub mod helpers;
     pub mod transfer;
     pub mod update_log;
     pub mod watch_folders;
@@ -19,13 +20,16 @@ pub mod functions {
 
 fn main() {
     println!(" ");
-    println!("Starting AutoSorter...");
+    println!("Starting SYNTH...");
     println!(" ");
 
-    let base_path: &Path = Path::new(get_base().as_str());
-    let root_path: &Path = Path::new(get_root().as_str());
-    let logs_path: &Path = Path::new(get_logs().as_str());
-    let bugs_path: &Path = Path::new(get_bugs().as_str());
+    let base_binding: String = get_base();
+    let logs_binding: String = get_logs();
+    let bugs_binding: String = get_bugs();
+
+    let base_path: &Path = Path::new(base_binding.as_str());
+    let logs_path: &Path = Path::new(logs_binding.as_str());
+    let bugs_path: &Path = Path::new(bugs_binding.as_str());
 
     // Create main AutoSorter directory if it doesnt exist
     if !Path::new(base_path).exists() {
@@ -52,8 +56,10 @@ fn main() {
     };
 
     // Create an activity log and bug report for today
-    _ = create_bug_report();
     _ = create_log();
+    _ = create_bug_report();
+
+    _ = append_log("Root folders created successfully. \n");
 
     // Watch folders - parameter is path from root eg. "Documents" for {root}/Documents
     start_watch("Downloads");

@@ -6,6 +6,7 @@ pub mod update_log {
     use std::path::{Path, PathBuf};
 
     use crate::functions::get_dirs::get_dirs::{get_bugs, get_logs};
+    use crate::functions::helpers::helpers::get_dir_entries;
 
     pub fn get_current_time(format: &'static str) -> String {
         let utc: DateTime<Utc> = Utc::now();
@@ -14,7 +15,7 @@ pub mod update_log {
     }
 
     pub fn create_bug_report() -> io::Result<()> {
-        let file_name: String = format!("AutoSort_{}.txt", get_current_time("%Y%m%d"));
+        let file_name: String = format!("Report_{}.txt", get_current_time("%Y%m%d"));
         let full_bugs_path: PathBuf = Path::new(get_bugs().as_str()).join(&file_name);
 
         if Path::new(&full_bugs_path).is_file() {
@@ -23,12 +24,10 @@ pub mod update_log {
             return Ok(());
         }
 
-        println!("Creating log...");
+        println!("Creating bug report...");
         _ = File::create(&full_bugs_path);
-        append_log(&get_current_time("%d-%m-%Y %H:%M:%S"));
-        append_log(" - Bug Report Created.");
+        _ = append_log("Bug Report Created.");
 
-        println!("Bug Report created successfully at: {:?}", full_bugs_path);
         println!(" ");
 
         return Ok(());
@@ -46,26 +45,19 @@ pub mod update_log {
 
         println!("Creating log...");
         _ = File::create(&full_log_path);
-        append_log(&get_current_time("%d-%m-%Y %H:%M:%S"));
-        append_log(" - Log Created.");
+        _ = append_log("Log Created.");
 
-        println!("Log created successfully at: {:?}", full_log_path);
         println!(" ");
 
         return Ok(());
     }
 
     pub fn append_log(content: &str) -> Result<(), io::Error> {
-        let log_path: &Path = Path::new(get_logs().as_str());
+        println!("LOGGING: {}", content);
+        let binding: String = get_logs();
+        let log_path: &Path = Path::new(binding.as_str());
 
-        // Get the list of log files in the directory
-        let mut all_logs: Vec<PathBuf> = Vec::new();
-        let entries: ReadDir = fs::read_dir(log_path)?;
-        for entry in entries {
-            if entry?.file_type()?.is_file() {
-                all_logs.push(entry?.path());
-            }
-        }
+        let all_logs: Vec<PathBuf> = get_dir_entries((&log_path).to_path_buf());
 
         // Get the latest log and open it in append mode
         let latest_log: &PathBuf = all_logs.iter().max().unwrap();
@@ -91,15 +83,11 @@ pub mod update_log {
     }
 
     pub fn append_bug_report(content: &str) -> Result<(), io::Error> {
-        let bugs_path: &Path = Path::new(get_bugs().as_str());
+        println!("BUG: {}", content);
+        let binding: String = get_bugs();
+        let bugs_path: &Path = Path::new(binding.as_str());
 
-        let mut all_reports: Vec<PathBuf> = Vec::new();
-        let entries: ReadDir = fs::read_dir(bugs_path)?;
-        for entry in entries {
-            if entry?.file_type()?.is_file() {
-                all_reports.push(entry?.path());
-            }
-        }
+        let all_reports: Vec<PathBuf> = get_dir_entries((&bugs_path).to_path_buf());
 
         // Get the latest report and open it in append mode
         let latest_log: &PathBuf = all_reports.iter().max().unwrap();

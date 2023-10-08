@@ -12,7 +12,6 @@ pub mod watch_folders {
     };
 
     use crate::functions::{
-        editor::editor::{fix_casing, move_file},
         get_dirs::get_dirs::get_root,
         transfer::transfer::{transfer_dir, transfer_file},
         update_log::update_log::append_log,
