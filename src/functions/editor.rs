@@ -14,18 +14,30 @@ pub mod editor {
         return input.to_lowercase().replace(" ", "").replace("-", "_");
     }
 
-    fn move_dir(file_path: PathBuf) {}
+    pub fn zip_dir(file_path: PathBuf) {
+        
+    }
 
-    fn move_file(source: &Path, file_name: &OsStr, classification: &str) -> PathBuf {
+    pub fn move_dir(file_path: PathBuf) -> PathBuf {
+        let base_path: String = format!("{}/Files/Folders", get_base());
+        let dir_binding_path: &Path = Path::new(base_path.as_str());
+        _ = create_dir_all(dir_binding_path);
+
+        // New Dir Pathing
+        let old_dir_name: &OsStr = file_path.file_name().unwrap();
+        let new_dir_name: String = str_transform(old_dir_name.to_str().unwrap());
+
+        let destination_path: PathBuf = dir_binding_path.join(new_dir_name);
+        _ = rename(&file_path, &destination_path);
+        _ = append_log(&format!("Moved {:?} to {:?}.", file_path, destination_path));
+
+        return destination_path;
+    }
+
+    pub fn move_file(source: &Path, file_name: &OsStr, classification: &str) -> PathBuf {
         let base_path: String = format!("{}/Files/{}", get_base(), classification);
         let dir_binding_path: &Path = Path::new(base_path.as_str());
-
-        if !dir_binding_path.exists() {
-            _ = append_log(&format!("Creating {:?}", dir_binding_path));
-            _ = create_dir_all(dir_binding_path);
-        } else {
-            _ = append_log(&format!("Existing Dir Path: {:?}", dir_binding_path));
-        }
+        _ = create_dir_all(dir_binding_path);
 
         let destination_path: PathBuf = dir_binding_path.join(file_name);
         _ = rename(source, &destination_path);
