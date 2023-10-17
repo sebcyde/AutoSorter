@@ -1,9 +1,6 @@
 pub mod editor {
     use std::ffi::OsStr;
-    use std::fs::{
-        self, create_dir_all, read_dir, remove_dir, remove_file, rename, set_permissions, DirEntry,
-        File, FileType, ReadDir,
-    };
+    use std::fs::{self, create_dir_all, read_dir, remove_dir, remove_file, rename, File};
     use std::io::{self, Write};
     use std::path::{Path, PathBuf};
 
@@ -89,6 +86,14 @@ pub mod editor {
                 classify_file(new_destination);
             } else if path.is_dir() {
                 move_dir(&path);
+            }
+        }
+
+        // Remove any empty directories
+        for entry in read_dir(&dir_path).unwrap() {
+            let path: PathBuf = entry.unwrap().path();
+            if path.is_dir() {
+                _ = remove_dir(&dir_path);
             }
         }
     }
@@ -177,7 +182,7 @@ pub mod editor {
                     file_path.to_str().unwrap()
                 ));
             }
-            Err(e) => {
+            Err(_) => {
                 _ = append_bug_report(&format!(
                     "File Deletion Error at: {}",
                     file_path.to_str().unwrap()

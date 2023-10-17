@@ -1,7 +1,7 @@
 pub mod update_log {
 
     use chrono::{DateTime, Utc};
-    use std::fs::{self, DirEntry, File, OpenOptions, ReadDir};
+    use std::fs::{File, OpenOptions};
     use std::io::{self, BufWriter, Write};
     use std::path::{Path, PathBuf};
 

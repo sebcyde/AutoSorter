@@ -1,7 +1,6 @@
 mod types;
 
-use crate::functions::editor::editor::clean_folder;
-use crate::functions::get_dirs::get_dirs::{get_base, get_bugs, get_logs, get_root};
+use crate::functions::get_dirs::get_dirs::{get_base, get_bugs, get_logs};
 use crate::functions::update_log::update_log::{append_log, create_bug_report, create_log};
 use crate::functions::watch_folders::watch_folders::start_watch;
 use std::fs;
@@ -64,5 +63,4 @@ fn main() {
 
     // Watch folders - parameter is path from root eg. "Documents" for {root}/Documents
     start_watch("Downloads");
-    // start_watch("Documents");
 }

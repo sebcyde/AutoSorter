@@ -3,11 +3,9 @@ pub mod watch_folders {
     extern crate notify;
 
     use notify::{
-        event::{ModifyKind, RenameMode},
         Config, EventKind, ReadDirectoryChangesWatcher, RecommendedWatcher, RecursiveMode, Watcher,
     };
     use std::{
-        ffi::OsStr,
         fs::{remove_dir, remove_dir_all},
         path::{Path, PathBuf},
     };
@@ -15,7 +13,7 @@ pub mod watch_folders {
     use crate::functions::{
         editor::editor::{clean_folder, fix_casing, move_dir, zip_directory},
         get_dirs::get_dirs::get_root,
-        transfer::transfer::{transfer_dir, transfer_file},
+        transfer::transfer::transfer_file,
         update_log::update_log::{append_bug_report, append_log},
     };
 

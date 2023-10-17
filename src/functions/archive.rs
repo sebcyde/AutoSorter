@@ -1,6 +1,6 @@
 pub mod archive {
 
-    use std::{fs, path::Path};
+    use std::fs;
 
     use crate::functions::update_log::update_log::append_log;
 

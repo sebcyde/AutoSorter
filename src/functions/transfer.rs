@@ -4,7 +4,7 @@ pub mod transfer {
 
     use crate::{
         functions::{
-            editor::editor::{classify_file, fix_casing, move_dir},
+            editor::editor::{classify_file, fix_casing},
             update_log::update_log::{append_bug_report, append_log},
         },
         types::types::EventStruct,
