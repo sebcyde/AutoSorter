@@ -1,5 +1,5 @@
 [package]
-name = "NEXUS"
+name = "auto_sorter"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,3 +10,5 @@ chrono = "0.4.26"
 tokio = { version = "1", features = ["full"] }
 notify = "5"
 crossbeam = "0.8"
+zip = "0.5"
+walkdir = "2.3"

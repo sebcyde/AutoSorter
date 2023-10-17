@@ -64,7 +64,7 @@ pub mod update_log {
         let current_time: String = get_current_time("%H:%M:%S");
         println!("Updating log at: {}", &current_time);
 
-        let mut options = OpenOptions::new();
+        let mut options: OpenOptions = OpenOptions::new();
         options.append(true);
         let log: File = options.open(latest_log)?;
 

@@ -8,13 +8,15 @@ pub mod watch_folders {
     };
     use std::{
         ffi::OsStr,
+        fs::{remove_dir, remove_dir_all},
         path::{Path, PathBuf},
     };
 
     use crate::functions::{
+        editor::editor::{fix_casing, move_dir, zip_directory},
         get_dirs::get_dirs::get_root,
         transfer::transfer::{transfer_dir, transfer_file},
-        update_log::update_log::append_log,
+        update_log::update_log::{append_bug_report, append_log},
     };
 
     use crate::types::types::EventStruct;
@@ -40,12 +42,31 @@ pub mod watch_folders {
     }
 
     fn modify_event(event_object: EventStruct) {
+        println!(" ");
         println!("Modify event triggered");
         debug_sort_fn(&event_object);
 
         if event_object.event_path.is_dir() {
-            println!("Transferring: {:?}.", event_object.event_target);
-            transfer_dir(event_object);
+            // Rename Directory
+            let path: PathBuf = fix_casing(event_object.event_path.clone());
+            println!("New Path after casing fix: {:?}", &path);
+
+            // Copy Directory to new destination
+            let destination: PathBuf = move_dir(&path);
+            println!("New Path after move: {:?}", &destination);
+
+            // Delete old version
+            if remove_dir(&path).is_err() {
+                let bug_report_content: String =
+                    format!("Error removing transferred directory at: {:?}", &path);
+                _ = append_bug_report(&bug_report_content);
+            } else {
+                // Zip Directory
+                let zip_res: Result<(), std::io::Error> = zip_directory(&destination);
+                if zip_res.is_ok() {
+                    _ = remove_dir_all(&destination)
+                }
+            }
         } else if event_object.event_path.is_file() {
             transfer_file(event_object);
         } else {

@@ -1,24 +1,23 @@
 pub mod editor {
     use std::ffi::OsStr;
     use std::fs::{
-        create_dir_all, read_dir, remove_file, rename, set_permissions, DirEntry, File, FileType,
-        ReadDir,
+        self, create_dir_all, read_dir, remove_file, rename, set_permissions, DirEntry, File,
+        FileType, ReadDir,
     };
-    use std::io;
+    use std::io::{self, Write};
     use std::path::{Path, PathBuf};
 
     use crate::functions::get_dirs::get_dirs::get_base;
     use crate::functions::update_log::update_log::{append_bug_report, append_log};
 
+    use walkdir::WalkDir;
+    use zip::{write::FileOptions, ZipWriter};
+
     pub fn str_transform(input: &str) -> String {
         return input.to_lowercase().replace(" ", "").replace("-", "_");
     }
 
-    pub fn zip_dir(file_path: PathBuf) {
-        
-    }
-
-    pub fn move_dir(file_path: PathBuf) -> PathBuf {
+    pub fn move_dir(file_path: &PathBuf) -> PathBuf {
         let base_path: String = format!("{}/Files/Folders", get_base());
         let dir_binding_path: &Path = Path::new(base_path.as_str());
         _ = create_dir_all(dir_binding_path);
@@ -26,12 +25,32 @@ pub mod editor {
         // New Dir Pathing
         let old_dir_name: &OsStr = file_path.file_name().unwrap();
         let new_dir_name: String = str_transform(old_dir_name.to_str().unwrap());
+        let destination: PathBuf = dir_binding_path.join(new_dir_name);
 
-        let destination_path: PathBuf = dir_binding_path.join(new_dir_name);
-        _ = rename(&file_path, &destination_path);
-        _ = append_log(&format!("Moved {:?} to {:?}.", file_path, destination_path));
+        // Create the destination directory
+        _ = create_dir_all(&destination);
 
-        return destination_path;
+        // Moving files
+        for entry in read_dir(&file_path).unwrap() {
+            if let Ok(entry) = entry {
+                let file_path = entry.path();
+                let destination_path = destination.join(file_path.file_name().unwrap());
+                if let Err(err) = rename(&file_path, &destination_path) {
+                    println!("Error moving file: {:?}", err);
+                }
+            }
+        }
+
+        // Moving the directory (if all files were moved)
+        if let Err(err) = rename(&file_path, &destination) {
+            println!("Error moving directory: {:?}", err);
+        }
+
+        // Logging
+        let log_content: String = format!("Moved {:?} to {:?}.", file_path, destination);
+        _ = append_log(&log_content);
+
+        return destination;
     }
 
     pub fn move_file(source: &Path, file_name: &OsStr, classification: &str) -> PathBuf {
@@ -51,8 +70,8 @@ pub mod editor {
             let path: PathBuf = entry.unwrap().path();
 
             if path.is_file() {
-                let new_destination: String = fix_casing(path).unwrap();
-                classify_file(Path::new(&new_destination).to_path_buf());
+                let new_destination: PathBuf = fix_casing(path);
+                classify_file(new_destination);
             } else if path.is_dir() {
                 // Recursive folder clean?
                 println!("Recursive clean folder call?");
@@ -66,7 +85,6 @@ pub mod editor {
         let path: &Path = Path::new(&file_path);
         let ext: &str = path.extension().unwrap().to_str().unwrap();
         let file_name: &OsStr = path.file_name().unwrap();
-        let destination: Option<PathBuf>;
 
         // debug
         println!("{}", format!("File: {:?} - Ext: {}", file_name, ext));
@@ -108,24 +126,27 @@ pub mod editor {
         }
     }
 
-    pub fn fix_casing(file_path: PathBuf) -> Option<String> {
+    pub fn fix_casing(file_path: PathBuf) -> PathBuf {
+        println!(" ");
+
         let source_filename: &str = file_path.file_name().unwrap().to_str().unwrap();
         let transformed_filename: String = str_transform(source_filename);
         let destination: PathBuf = file_path.with_file_name(&transformed_filename);
+        let return_path: PathBuf = destination.clone();
 
         println!("From Case Fixer:");
-        println!("source_filename: {}", source_filename);
-        println!("destination file: {:?}", destination);
+        println!("source filepath: {:?}", &file_path);
+        println!("source_filename: {:?}", &source_filename);
+        println!("destination file: {:?}", &destination);
         println!(" ");
 
-        if rename(&file_path, &destination).is_ok() {
-            _ = append_log(
-                format!("File Rename Successful: {}", destination.to_str().unwrap()).as_str(),
-            );
-            return Some(transformed_filename);
-        }
+        _ = fs::rename(&file_path, &destination);
+        let destination_str: &str = destination.to_str().unwrap();
+        let log_content: String = format!("File Rename Successful: {}", destination_str);
+        println!("Directory Casing Fixed");
+        _ = append_log(&log_content);
 
-        return None;
+        return return_path;
     }
 
     pub fn delete_file(file_path: PathBuf) {
@@ -147,5 +168,34 @@ pub mod editor {
                 ));
             }
         }
+    }
+
+    use io::Read;
+
+    pub fn zip_directory(source: &PathBuf) -> io::Result<()> {
+        // Create a new ZIP archive.
+        let zip_path: PathBuf = Path::with_extension(&source, "zip");
+        let archive: File = File::create(zip_path).unwrap();
+        let mut zip: ZipWriter<File> = ZipWriter::new(archive);
+
+        // Walk through the source directory and add its contents to the ZIP archive.
+        for entry in WalkDir::new(source) {
+            let entry = entry?;
+            let entry_path = entry.path();
+
+            if entry_path.is_file() {
+                let relative_path = entry_path.strip_prefix(source);
+                let options: FileOptions = FileOptions::default().unix_permissions(0o755);
+
+                zip.start_file(relative_path.unwrap().to_str().unwrap(), options)?;
+
+                let mut buffer = Vec::new();
+                let source_file = File::open(entry_path)?;
+                source_file.take(u64::MAX).read_to_end(&mut buffer)?;
+                zip.write_all(&buffer)?;
+            }
+        }
+
+        Ok(())
     }
 }

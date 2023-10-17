@@ -20,16 +20,16 @@ pub mod functions {
 
 fn main() {
     println!(" ");
-    println!("Starting SYNTH...");
+    println!("Starting AutoSorter...");
     println!(" ");
 
     let base_binding: String = get_base();
     let logs_binding: String = get_logs();
     let bugs_binding: String = get_bugs();
 
-    let base_path: &Path = Path::new(base_binding.as_str());
-    let logs_path: &Path = Path::new(logs_binding.as_str());
-    let bugs_path: &Path = Path::new(bugs_binding.as_str());
+    let base_path: &Path = Path::new(&base_binding);
+    let logs_path: &Path = Path::new(&logs_binding);
+    let bugs_path: &Path = Path::new(&bugs_binding);
 
     // Create main AutoSorter directory if it doesnt exist
     if !Path::new(base_path).exists() {
