@@ -13,7 +13,7 @@ pub mod watch_folders {
     };
 
     use crate::functions::{
-        editor::editor::{fix_casing, move_dir, zip_directory},
+        editor::editor::{clean_folder, fix_casing, move_dir, zip_directory},
         get_dirs::get_dirs::get_root,
         transfer::transfer::{transfer_dir, transfer_file},
         update_log::update_log::{append_bug_report, append_log},
@@ -49,11 +49,14 @@ pub mod watch_folders {
         if event_object.event_path.is_dir() {
             // Rename Directory
             let path: PathBuf = fix_casing(event_object.event_path.clone());
-            println!("New Path after casing fix: {:?}", &path);
 
             // Copy Directory to new destination
-            let destination: PathBuf = move_dir(&path);
-            println!("New Path after move: {:?}", &destination);
+            let destination_res: Option<PathBuf> = move_dir(&path);
+            if destination_res.is_none() {
+                return;
+            }
+
+            let destination: PathBuf = destination_res.unwrap();
 
             // Delete old version
             if remove_dir(&path).is_err() {
@@ -65,6 +68,10 @@ pub mod watch_folders {
                 let zip_res: Result<(), std::io::Error> = zip_directory(&destination);
                 if zip_res.is_ok() {
                     _ = remove_dir_all(&destination)
+                } else {
+                    let content: String =
+                        format!("Error zipping transferred directory at: {:?}", &path);
+                    _ = append_bug_report(&content);
                 }
             }
         } else if event_object.event_path.is_file() {
@@ -188,6 +195,10 @@ pub mod watch_folders {
     pub fn start_watch(dir_name: &'static str) {
         let dir_path: PathBuf = Path::new(get_root().as_str()).join(dir_name);
         println!("Starting {} watcher", dir_name);
+
+        _ = append_log(&format!("Cleaning {}.", dir_name));
+        _ = clean_folder(&dir_path);
+
         _ = append_log(&format!("Starting {} watcher.", dir_name));
         _ = watch_folder(&dir_path);
     }

@@ -1,8 +1,8 @@
 pub mod editor {
     use std::ffi::OsStr;
     use std::fs::{
-        self, create_dir_all, read_dir, remove_file, rename, set_permissions, DirEntry, File,
-        FileType, ReadDir,
+        self, create_dir_all, read_dir, remove_dir, remove_file, rename, set_permissions, DirEntry,
+        File, FileType, ReadDir,
     };
     use std::io::{self, Write};
     use std::path::{Path, PathBuf};
@@ -17,7 +17,17 @@ pub mod editor {
         return input.to_lowercase().replace(" ", "").replace("-", "_");
     }
 
-    pub fn move_dir(file_path: &PathBuf) -> PathBuf {
+    pub fn is_directory_empty(path: &std::path::Path) -> Result<bool, std::io::Error> {
+        let entries = fs::read_dir(path)?;
+
+        for _ in entries {
+            return Ok(false);
+        }
+
+        Ok(true)
+    }
+
+    pub fn move_dir(file_path: &PathBuf) -> Option<PathBuf> {
         let base_path: String = format!("{}/Files/Folders", get_base());
         let dir_binding_path: &Path = Path::new(base_path.as_str());
         _ = create_dir_all(dir_binding_path);
@@ -26,6 +36,11 @@ pub mod editor {
         let old_dir_name: &OsStr = file_path.file_name().unwrap();
         let new_dir_name: String = str_transform(old_dir_name.to_str().unwrap());
         let destination: PathBuf = dir_binding_path.join(new_dir_name);
+
+        if is_directory_empty(&file_path).unwrap() {
+            _ = remove_dir(&file_path);
+            return None;
+        }
 
         // Create the destination directory
         _ = create_dir_all(&destination);
@@ -50,7 +65,7 @@ pub mod editor {
         let log_content: String = format!("Moved {:?} to {:?}.", file_path, destination);
         _ = append_log(&log_content);
 
-        return destination;
+        return Some(destination);
     }
 
     pub fn move_file(source: &Path, file_name: &OsStr, classification: &str) -> PathBuf {
@@ -65,7 +80,7 @@ pub mod editor {
         return destination_path;
     }
 
-    pub fn clean_folder(dir_path: PathBuf) {
+    pub fn clean_folder(dir_path: &PathBuf) {
         for entry in read_dir(&dir_path).unwrap() {
             let path: PathBuf = entry.unwrap().path();
 
@@ -73,10 +88,7 @@ pub mod editor {
                 let new_destination: PathBuf = fix_casing(path);
                 classify_file(new_destination);
             } else if path.is_dir() {
-                // Recursive folder clean?
-                println!("Recursive clean folder call?");
-                println!("{:?}", path.to_str());
-                // clean_folder(dir_path.to_owned());
+                move_dir(&path);
             }
         }
     }
@@ -108,9 +120,7 @@ pub mod editor {
                 Some(move_file(path, file_name, "Videos"))
             }
             // Compressed Folders - Might not need
-            "zip" | "rar" | "7z" | "tar" | "gz" => {
-                Some(move_file(path, file_name, "Compressed_Files"))
-            }
+            "zip" | "rar" | "7z" | "tar" | "gz" => Some(move_file(path, file_name, "Folders")),
             // Code
             "c" | "cpp" | "java" | "py" | "html" | "css" | "js" | "json" | "xml" | "sql" => {
                 Some(move_file(path, file_name, "Code"))
