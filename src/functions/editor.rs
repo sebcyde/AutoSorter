@@ -16,11 +16,9 @@ pub mod editor {
 
     pub fn is_directory_empty(path: &std::path::Path) -> Result<bool, std::io::Error> {
         let entries = fs::read_dir(path)?;
-
         for _ in entries {
             return Ok(false);
         }
-
         Ok(true)
     }
 
