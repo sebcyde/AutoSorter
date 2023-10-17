@@ -1,10 +1,11 @@
 mod types;
 
-use crate::functions::get_dirs::get_dirs::{get_base, get_bugs, get_logs};
+use crate::functions::editor::editor::clean_folder;
+use crate::functions::get_dirs::get_dirs::{get_base, get_bugs, get_logs, get_root};
 use crate::functions::update_log::update_log::{append_log, create_bug_report, create_log};
 use crate::functions::watch_folders::watch_folders::start_watch;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub mod functions {
     pub mod archive;
@@ -60,6 +61,15 @@ fn main() {
     _ = create_bug_report();
 
     _ = append_log("Root folders created successfully. \n");
+
+    let activity_mode: String;
+
+    if activity_mode.eq_ignore_ascii_case("clean") {
+        let dir_path: PathBuf = Path::new(get_root().as_str()).join("Downloads");
+        println!("Cleaning {:?}.", &dir_path);
+        _ = append_log(&format!("Cleaning {:?}.", &dir_path));
+        _ = clean_folder(&dir_path);
+    }
 
     // Watch folders - parameter is path from root eg. "Documents" for {root}/Documents
     start_watch("Downloads");
