@@ -95,8 +95,14 @@ pub mod editor {
 
     pub fn classify_file(file_path: PathBuf) -> Option<PathBuf> {
         let path: &Path = Path::new(&file_path);
-        let ext: &str = path.extension().unwrap().to_str().unwrap();
         let file_name: &OsStr = path.file_name().unwrap();
+
+        if path.extension().is_none() {
+            move_file(path, file_name, "Other");
+            return None;
+        }
+
+        let ext: &str = path.extension().unwrap().to_str().unwrap();
 
         // debug
         println!("{}", format!("File: {:?} - Ext: {}", file_name, ext));
@@ -119,7 +125,7 @@ pub mod editor {
             "mp4" | "avi" | "mkv" | "mov" | "wmv" | "flv" => {
                 Some(move_file(path, file_name, "Videos"))
             }
-            // Compressed Folders - Might not need
+            // Folders
             "zip" | "rar" | "7z" | "tar" | "gz" => Some(move_file(path, file_name, "Folders")),
             // Code
             "c" | "cpp" | "java" | "py" | "html" | "css" | "js" | "json" | "xml" | "sql" => {
