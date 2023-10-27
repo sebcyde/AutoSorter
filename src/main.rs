@@ -62,15 +62,6 @@ fn main() {
 
     _ = append_log("Root folders created successfully. \n");
 
-    let activity_mode: String;
-
-    if activity_mode.eq_ignore_ascii_case("clean") {
-        let dir_path: PathBuf = Path::new(get_root().as_str()).join("Downloads");
-        println!("Cleaning {:?}.", &dir_path);
-        _ = append_log(&format!("Cleaning {:?}.", &dir_path));
-        _ = clean_folder(&dir_path);
-    }
-
     // Watch folders - parameter is path from root eg. "Documents" for {root}/Documents
     start_watch("Downloads");
 }

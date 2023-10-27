@@ -1,6 +1,9 @@
 pub mod editor {
     use std::ffi::OsStr;
-    use std::fs::{self, create_dir_all, read_dir, remove_dir, remove_file, rename, File};
+    use std::fs::{
+        self, create_dir_all, read_dir, remove_dir, remove_dir_all, remove_file, rename, File,
+        ReadDir,
+    };
     use std::io::{self, Write};
     use std::path::{Path, PathBuf};
 
@@ -14,12 +17,9 @@ pub mod editor {
         return input.to_lowercase().replace(" ", "").replace("-", "_");
     }
 
-    pub fn is_directory_empty(path: &std::path::Path) -> Result<bool, std::io::Error> {
-        let entries = fs::read_dir(path)?;
-        for _ in entries {
-            return Ok(false);
-        }
-        Ok(true)
+    pub fn is_directory_empty(path: &std::path::Path) -> bool {
+        let is_empty: bool = path.read_dir().unwrap().next().is_none();
+        return is_empty;
     }
 
     pub fn move_dir(file_path: &PathBuf) -> Option<PathBuf> {
@@ -32,8 +32,8 @@ pub mod editor {
         let new_dir_name: String = str_transform(old_dir_name.to_str().unwrap());
         let destination: PathBuf = dir_binding_path.join(new_dir_name);
 
-        if is_directory_empty(&file_path).unwrap() {
-            _ = remove_dir(&file_path);
+        if is_directory_empty(&file_path) {
+            _ = remove_dir_all(&file_path);
             return None;
         }
 
@@ -51,9 +51,13 @@ pub mod editor {
             }
         }
 
-        // Moving the directory (if all files were moved)
         if let Err(err) = rename(&file_path, &destination) {
             println!("Error moving directory: {:?}", err);
+        }
+
+        if is_directory_empty(&file_path) {
+            _ = remove_dir_all(&file_path);
+            return None;
         }
 
         // Logging
@@ -78,10 +82,15 @@ pub mod editor {
     pub fn clean_folder(dir_path: &PathBuf) {
         for entry in read_dir(&dir_path).unwrap() {
             let path: PathBuf = entry.unwrap().path();
+            let removal_path: PathBuf = path.clone();
 
             if path.is_file() {
                 let new_destination: PathBuf = fix_casing(path);
                 classify_file(new_destination);
+                println!("Finished classifying {:?}", &removal_path);
+
+                println!("Removing {:?}", &removal_path);
+                delete_file(removal_path);
             } else if path.is_dir() {
                 move_dir(&path);
             }
@@ -180,7 +189,9 @@ pub mod editor {
                     file_path.to_str().unwrap()
                 ));
             }
-            Err(_) => {
+            Err(err) => {
+                println!("Deletion Error: {}", err);
+
                 _ = append_bug_report(&format!(
                     "File Deletion Error at: {}",
                     file_path.to_str().unwrap()
